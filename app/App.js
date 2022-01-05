@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -171,16 +171,57 @@ export default function App() {
 		'161',
 	];
 
+	function isCloseToBottom({ layoutMeasurement, contentOffset, contentSize }) {
+		return (
+			layoutMeasurement.height + contentOffset.y >= contentSize.height - 20
+		);
+	}
+
+	function isCloseToTop({ layoutMeasurement, contentOffset, contentSize }) {
+		return contentOffset.y == 0;
+	}
+
+	const reference = useRef();
+
 	return (
-		<ScrollView style={styles.container}>
-			<Text>{JSON.stringify(paginationCurrentData, null, 1)}</Text>
-			{paginationCurrentData.map((result, index) => {
-				return (
-					<View style={styles.box} key={index}>
-						<Text>Elemento {result}</Text>
-					</View>
-				);
-			})}
+		<View style={styles.container}>
+			{/* <Text>{JSON.stringify(paginationCurrentData, null, 1)}</Text> */}
+			{/* <ScrollView
+				ref={reference}
+				onScroll={({ nativeEvent }) => {
+					if (isCloseToTop(nativeEvent)) {
+						//do something
+						console.log('topo');
+					}
+					if (isCloseToBottom(nativeEvent)) {
+						//do something
+						console.log('baixo');
+					}
+				}}
+			> */}
+
+			<PaginationJson
+				data='https://www.bhxsites.com.br/playground/api/react-pagination/users.php'
+				setData={setPaginationCurrentData}
+				pathData='list'
+				saveLocalJson={false}
+				perPage={4}
+			>
+				{paginationCurrentData.map((result, index) => {
+					return (
+						<View style={styles.box} key={index}>
+							<Text>Elemento {result}</Text>
+						</View>
+					);
+				})}
+			</PaginationJson>
+
+			{/* json local */}
+			{/* <PaginationJson
+				data={jsonData}
+				setData={setPaginationCurrentData}
+				perPage={10}
+			/> */}
 
 			{/* requisicao toda vez */}
 			{/* <PaginationJson
@@ -192,21 +233,15 @@ export default function App() {
 			/> */}
 
 			{/* unica requisicao */}
-			<PaginationJson
+			{/* <PaginationJson
 				data='https://www.bhxsites.com.br/playground/api/react-pagination/users.php?page=1&perpage=10'
 				setData={setPaginationCurrentData}
 				pathData='list'
 				perPage={2}
-			/>
-
-			{/* json local */}
-			{/* <PaginationJson
-				data={jsonData}
-				setData={setPaginationCurrentData}
-				perPage={2}
 			/> */}
+
 			<StatusBar style='auto' />
-		</ScrollView>
+		</View>
 	);
 }
 

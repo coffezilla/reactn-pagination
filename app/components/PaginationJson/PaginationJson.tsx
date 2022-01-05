@@ -1,13 +1,16 @@
 /* eslint-disable */
 /* eslint-disable  operator-linebreak */
 // npm install @types/react @types/react-native
-import { Text, View, Pressable, StyleSheet, Button } from 'react-native';
-import React, { useEffect, useRef } from 'react';
+import {
+	Text,
+	View,
+	Pressable,
+	StyleSheet,
+	Button,
+	ScrollView,
+} from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
-// import { install } from 'resize-observer';
-
-// install();
-// if (!window.ResizeObserver) install();
 
 interface IProps {
 	//  local data. no need if is getting
@@ -26,8 +29,8 @@ interface IProps {
 	pathData?: string;
 	// callback function after successfully change the page
 	callbackChangePage?: Function;
-	// class or id of the element that will calculate scroll to the bottom
-	scrollDomReference?: string | null;
+	// content
+	children: any | null;
 }
 
 interface IRef {
@@ -55,7 +58,7 @@ const Pagination = ({
 	autoLoad = false,
 	saveLocalJson = true,
 	pathData = undefined,
-	scrollDomReference = null,
+	children,
 }: IProps) => {
 	const refContentScroll: React.MutableRefObject<IRef> = useRef({
 		allContent: 0,
@@ -72,7 +75,7 @@ const Pagination = ({
 	let newContent: any[] = [];
 	let pagesList: any[] = [];
 	let totalResults: number = 0;
-	let isLoadingServerScroll = false;
+	const [isLoadingServerScroll, setIsLoadingServerScroll] = useState(false);
 
 	const dataRetrieveFrom =
 		typeof data === 'object'
@@ -115,8 +118,6 @@ const Pagination = ({
 			totalResults: 0,
 		};
 
-		// console.log('canoa', dataRetrieveFrom);
-
 		// getting data from server each page
 		if (dataRetrieveFrom === 'SERVER') {
 			await axios({
@@ -144,10 +145,6 @@ const Pagination = ({
 		// gettin data from server only the first time
 		// after that, the json is treat like local json
 		if (dataRetrieveFrom === 'SERVER_LOCAL') {
-			// console.log(
-			// 	'get server datay',
-			// 	refContentScroll.current.localData.length
-			// );
 			if (refContentScroll.current.localData.length === 0) {
 				await axios({
 					url: `${data}`,
@@ -183,9 +180,8 @@ const Pagination = ({
 	};
 
 	const getResultPage = async (page: number = currentPage) => {
-		isLoadingServerScroll = true;
+		setIsLoadingServerScroll(true);
 		await getFullJsonResults(page).then((responseServerJson) => {
-			// console.log('grito', responseServerJson);
 			if (responseServerJson.status === 1) {
 				newContent = responseServerJson.dataRawArr;
 				totalResults = responseServerJson.totalResults;
@@ -223,7 +219,10 @@ const Pagination = ({
 			} else {
 				console.log('COULD NOT GET DATA FROM THIS OBJECT OR THIS ENDPOINT');
 			}
-			isLoadingServerScroll = false;
+
+			setTimeout(() => {
+				setIsLoadingServerScroll(false);
+			}, 1000);
 		});
 	};
 
@@ -248,101 +247,103 @@ const Pagination = ({
 				? refContentScroll.current.page
 				: refContentScroll.current.page + 1;
 		getResultPage(pageGoesTo);
-		// console.log('next');
+	};
+
+	const isCloseToBottom = ({
+		layoutMeasurement,
+		contentOffset,
+		contentSize,
+	}) => {
+		return (
+			layoutMeasurement.height + contentOffset.y >= contentSize.height - 20
+		);
+	};
+
+	const isCloseToTop = ({ layoutMeasurement, contentOffset, contentSize }) => {
+		return contentOffset.y == 0;
 	};
 
 	useEffect(() => {
-		// const scrolling = () => {
-		// 	// eventListener scrolling to get bottom of the page
-		// 	// only load more results if is not loading something
-		// 	// remove event if has got everything
-		// 	if (!isLoadingServerScroll) {
-		// 		let windowCurrentPosition = 0;
-		// 		if (window !== undefined) {
-		// 			windowCurrentPosition = window.pageYOffset;
-		// 		}
-		// 		if (
-		// 			refContentScroll.current.viewport + windowCurrentPosition >
-		// 			refContentScroll.current.allContent
-		// 		) {
-		// 			const nextPage = refContentScroll.current.page + 1;
-		// 			if (nextPage < refContentScroll.current.pages.length + 1) {
-		// 				getResultPage(nextPage);
-		// 			} else {
-		// 				window.removeEventListener('scroll', scrolling, false);
-		// 			}
-		// 		}
-		// 	}
-		// };
-		// if (scrollDomReference != null) {
-		// 	const contentScrollBox: Element | null =
-		// 		document.querySelector(scrollDomReference);
-		// 	if (autoLoad && contentScrollBox !== null) {
-		// 		if (contentScrollBox instanceof HTMLElement) {
-		// 			// create an Observer instance
-		// 			const resizeObserver = new ResizeObserver(() => {
-		// 				refContentScroll.current = {
-		// 					...refContentScroll.current,
-		// 					allContent:
-		// 						contentScrollBox?.scrollHeight + contentScrollBox?.offsetTop,
-		// 					viewport: window?.innerHeight,
-		// 				};
-		// 			});
-		// 			// start observing a DOM node
-		// 			resizeObserver.observe(document.body);
-		// 			window.addEventListener('scroll', scrolling, false);
-		// 		}
-		// 	}
-		// }
 		getResultPage();
-		// return () => {
-		// 	window.removeEventListener('scroll', scrolling);
-		// };
 	}, []);
 
 	return (
 		<>
 			{/* <pre>{JSON.stringify(refContentScroll, null, 1)}</pre> */}
 			{/* <pre>{JSON.stringify(localData, null, 1)}</pre> */}
-			{autoLoad ? (
-				<>
-					<Text>Scroll to nextpage</Text>
-				</>
-			) : (
-				<>
-					<Text>Pagination:</Text>
 
-					{refContentScroll.current.page === 1 ? (
-						<Text>Prev</Text>
-					) : (
-						<Button title='Prev' onPress={handlePrevPage} />
-					)}
+			<ScrollView
+				onScroll={({ nativeEvent }) => {
+					if (autoLoad) {
+						if (isCloseToTop(nativeEvent)) {
+						}
+						if (isCloseToBottom(nativeEvent)) {
+							if (!isLoadingServerScroll) {
+								const nextPage = refContentScroll.current.page + 1;
+								getResultPage(nextPage);
+							}
+						}
+					}
+				}}
+			>
+				{children}
+				{autoLoad ? (
+					isLoadingServerScroll && (
+						<View
+							style={{
+								backgroundColor: 'gray',
+								width: '100%',
+								height: 50,
+							}}
+						>
+							<Text
+								style={{
+									color: 'gray',
+									fontSize: 20,
+								}}
+							>
+								Carregando
+							</Text>
+						</View>
+					)
+				) : (
+					<>
+						<Text>Pagination:</Text>
 
-					{refContentScroll.current.pages.map((page: number, index: number) => {
-						return (
-							<View key={page}>
-								{page === refContentScroll.current.page ? (
-									<Text>
-										{page} - {index}
-									</Text>
-								) : (
-									<Button
-										title={`${page} - ${index}`}
-										onPress={() => handleNewPage(page)}
-									/>
-								)}
-							</View>
-						);
-					})}
+						{refContentScroll.current.page === 1 ? (
+							<Text>Prev</Text>
+						) : (
+							<Button title='Prev' onPress={handlePrevPage} />
+						)}
 
-					{refContentScroll.current.page >=
-					refContentScroll.current.pages.length ? (
-						<Text>Next</Text>
-					) : (
-						<Button title='Next' onPress={handleNextPage} />
-					)}
-				</>
-			)}
+						{refContentScroll.current.pages.map(
+							(page: number, index: number) => {
+								return (
+									<View key={page}>
+										{page === refContentScroll.current.page ? (
+											<Text>
+												{page} - {index}
+											</Text>
+										) : (
+											<Button
+												title={`${page} - ${index}`}
+												onPress={() => handleNewPage(page)}
+											/>
+										)}
+									</View>
+								);
+							}
+						)}
+
+						{refContentScroll.current.page >=
+						refContentScroll.current.pages.length ? (
+							<Text>Next</Text>
+						) : (
+							<Button title='Next' onPress={handleNextPage} />
+						)}
+					</>
+				)}
+			</ScrollView>
 		</>
 	);
 };
