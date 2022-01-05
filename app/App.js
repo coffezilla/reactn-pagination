@@ -186,22 +186,11 @@ export default function App() {
 	return (
 		<View style={styles.container}>
 			{/* <Text>{JSON.stringify(paginationCurrentData, null, 1)}</Text> */}
-			{/* <ScrollView
-				ref={reference}
-				onScroll={({ nativeEvent }) => {
-					if (isCloseToTop(nativeEvent)) {
-						//do something
-						console.log('topo');
-					}
-					if (isCloseToBottom(nativeEvent)) {
-						//do something
-						console.log('baixo');
-					}
-				}}
-			> */}
 
 			<PaginationJson
 				data='https://www.bhxsites.com.br/playground/api/react-pagination/users.php'
+				// data='https://www.bhxsites.com.br/playground/api/react-pagination/users.php?page=1&perpage=10'
+				// data={jsonData}
 				setData={setPaginationCurrentData}
 				pathData='list'
 				saveLocalJson={false}
