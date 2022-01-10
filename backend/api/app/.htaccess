@@ -1,0 +1,27 @@
+#force www - https
+
+
+<IfModule mod_rewrite.c>
+   
+    RewriteEngine On
+    SetEnvIf Authorization .+ HTTP_AUTHORIZATION=$0
+
+    RewriteRule ^content/get-posts?$ /api/app/content/get_posts.php [NC,L]
+
+
+
+
+    RewriteRule ^auth/check-auth?$ /api/app/auth/check_auth.php [NC,L]
+    RewriteRule ^auth/login?$ /api/app/auth/login.php [NC,L]
+    RewriteRule ^auth/signup?$ /api/app/auth/signup.php [NC,L]
+    RewriteRule ^auth/delete-user?$ /api/app/auth/delete_user.php [NC,L]
+    RewriteRule ^auth/forgot-password?$ /api/app/auth/start_forgot_password.php [NC,L]
+    RewriteRule ^auth/pin-check?$ /api/app/auth/pin_check_forgot_password.php [NC,L]
+    RewriteRule ^auth/set-new-password?$ /api/app/auth/set_new_password.php [NC,L]
+    RewriteRule ^auth/password-check?$ /api/app/auth/password_check_change_password.php [NC,L]
+    
+    # user
+    RewriteRule ^user/get-data?$ /api/app/user/user_get_data.php [NC,L]
+    RewriteRule ^user/edit?$ /api/app/user/user_edit_data.php [NC,L]
+
+</IfModule>

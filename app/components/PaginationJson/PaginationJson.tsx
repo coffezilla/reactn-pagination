@@ -8,6 +8,7 @@ import {
 	StyleSheet,
 	Button,
 	ScrollView,
+	RefreshControl,
 } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
@@ -31,6 +32,12 @@ interface IProps {
 	callbackChangePage?: Function;
 	// content
 	children: any | null;
+	// get param page
+	paramPage?: string;
+	// get param per page
+	paramPerpage?: string;
+	// aditional new params
+	params: string;
 }
 
 interface IRef {
@@ -59,6 +66,9 @@ const Pagination = ({
 	saveLocalJson = true,
 	pathData = undefined,
 	children,
+	paramPage = 'page',
+	paramPerpage = 'perpage',
+	params = '',
 }: IProps) => {
 	const refContentScroll: React.MutableRefObject<IRef> = useRef({
 		allContent: 0,
@@ -76,6 +86,8 @@ const Pagination = ({
 	let pagesList: any[] = [];
 	let totalResults: number = 0;
 	const [isLoadingServerScroll, setIsLoadingServerScroll] = useState(false);
+	const [reloadContent, setReloadContent] = useState(false);
+	const [refreshing, setRefreshing] = useState(false);
 
 	const dataRetrieveFrom =
 		typeof data === 'object'
@@ -121,7 +133,7 @@ const Pagination = ({
 		// getting data from server each page
 		if (dataRetrieveFrom === 'SERVER') {
 			await axios({
-				url: `${data}?page=${page}&perpage=${perPage}`,
+				url: `${data}?${paramPage}=${page}&${paramPerpage}=${perPage}&${params}`,
 				method: 'get',
 			})
 				.then((responseData) => {
@@ -135,7 +147,7 @@ const Pagination = ({
 						totalResults: responseData.data.totalRows,
 					};
 
-					console.log('get server data', responseData.data.list);
+					console.log('get server data');
 				})
 				.catch((errorData) => {
 					console.log('ENDPOINT NOT FOUND', errorData);
@@ -147,7 +159,7 @@ const Pagination = ({
 		if (dataRetrieveFrom === 'SERVER_LOCAL') {
 			if (refContentScroll.current.localData.length === 0) {
 				await axios({
-					url: `${data}`,
+					url: `${data}?${params}`,
 					method: 'get',
 				})
 					.then((responseData) => {
@@ -155,7 +167,7 @@ const Pagination = ({
 							? responseData.data[pathData]
 							: responseData.data;
 						serverResponse = getDataFromJson(dataJson, page);
-						console.log('get server data', responseData.data.list);
+						console.log('get server dataz');
 					})
 					.catch((errorData) => {
 						console.log('ENDPOINT NOT FOUND', errorData);
@@ -223,6 +235,8 @@ const Pagination = ({
 			setTimeout(() => {
 				setIsLoadingServerScroll(false);
 			}, 1000);
+
+			setRefreshing(false);
 		});
 	};
 
@@ -263,9 +277,38 @@ const Pagination = ({
 		return contentOffset.y == 0;
 	};
 
-	useEffect(() => {
+	// useEffect(() => {
+	// 	getResultPage();
+	// }, []);
+
+	/////
+	const onRefreshRanking = () => {
+		refContentScroll.current = {
+			allContent: 0,
+			page: 1,
+			result: [],
+			pages: [],
+			viewport: 0,
+			dataTemp: [],
+			localData: [],
+		};
+
+		setData(null);
+		setRefreshing(true);
 		getResultPage();
-	}, []);
+	};
+
+	// useFocusEffect(() => {
+	// 	if (reloadContent) {
+	// 		onRefreshRanking();
+	// 		setReloadContent(false);
+	// 	}
+	// });
+
+	useEffect(() => {
+		onRefreshRanking();
+		// setReloadContent(true);
+	}, [params]);
 
 	return (
 		<>
@@ -273,6 +316,12 @@ const Pagination = ({
 			{/* <pre>{JSON.stringify(localData, null, 1)}</pre> */}
 
 			<ScrollView
+				refreshControl={
+					<RefreshControl
+						refreshing={refreshing}
+						onRefresh={onRefreshRanking}
+					/>
+				}
 				onScroll={({ nativeEvent }) => {
 					if (autoLoad) {
 						if (isCloseToTop(nativeEvent)) {

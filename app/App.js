@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Button } from 'react-native';
 
 //
 import PaginationJson from './components/PaginationJson';
@@ -171,38 +171,59 @@ export default function App() {
 		'161',
 	];
 
-	function isCloseToBottom({ layoutMeasurement, contentOffset, contentSize }) {
-		return (
-			layoutMeasurement.height + contentOffset.y >= contentSize.height - 20
-		);
-	}
+	// function isCloseToBottom({ layoutMeasurement, contentOffset, contentSize }) {
+	// 	return (
+	// 		layoutMeasurement.height + contentOffset.y >= contentSize.height - 20
+	// 	);
+	// }
 
-	function isCloseToTop({ layoutMeasurement, contentOffset, contentSize }) {
-		return contentOffset.y == 0;
-	}
+	// function isCloseToTop({ layoutMeasurement, contentOffset, contentSize }) {
+	// 	return contentOffset.y == 0;
+	// }
 
-	const reference = useRef();
+	const [paginationTimestamp, setPaginationTimestamp] = useState(null);
+
+	const reloadAllData = () => {
+		const timestamp = new Date().getTime();
+		setPaginationTimestamp(timestamp);
+	};
+	// const reference = useRef();
+	const ENDPOINT_URL = 'http://192.168.0.106/api/app';
 
 	return (
 		<View style={styles.container}>
 			{/* <Text>{JSON.stringify(paginationCurrentData, null, 1)}</Text> */}
 
+			<Button title='voltar para página 1' onPress={reloadAllData} />
+
 			<PaginationJson
-				data='https://www.bhxsites.com.br/playground/api/react-pagination/users.php'
+				// data='https://www.bhxsites.com.br/playground/api/react-pagination/users.php'
 				// data='https://www.bhxsites.com.br/playground/api/react-pagination/users.php?page=1&perpage=10'
+				// data={`${ENDPOINT_URL}/content/get-posts?page=1&perpage=20`}
+				data={`${ENDPOINT_URL}/content/get-posts`}
 				// data={jsonData}
 				setData={setPaginationCurrentData}
 				pathData='list'
+				autoLoad
 				saveLocalJson={false}
 				perPage={4}
+				params={`timestamp=${paginationTimestamp}`}
 			>
-				{paginationCurrentData.map((result, index) => {
-					return (
-						<View style={styles.box} key={index}>
-							<Text>Elemento {result}</Text>
-						</View>
-					);
-				})}
+				{paginationCurrentData ? (
+					paginationCurrentData.length > 0 ? (
+						paginationCurrentData.map((result, index) => {
+							return (
+								<View style={styles.box} key={index}>
+									<Text>Elemento {result}</Text>
+								</View>
+							);
+						})
+					) : (
+						<Text>Nada</Text>
+					)
+				) : (
+					<Text>Loading</Text>
+				)}
 			</PaginationJson>
 
 			{/* json local */}
