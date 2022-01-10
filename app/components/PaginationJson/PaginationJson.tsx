@@ -1,15 +1,7 @@
 /* eslint-disable */
 /* eslint-disable  operator-linebreak */
 // npm install @types/react @types/react-native
-import {
-	Text,
-	View,
-	Pressable,
-	StyleSheet,
-	Button,
-	ScrollView,
-	RefreshControl,
-} from 'react-native';
+import { Text, View, Button, ScrollView, RefreshControl } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 
@@ -63,7 +55,7 @@ const Pagination = ({
 	perPage = 10,
 	callbackChangePage,
 	autoLoad = false,
-	saveLocalJson = true,
+	saveLocalJson = false,
 	pathData = undefined,
 	children,
 	paramPage = 'page',
@@ -124,6 +116,12 @@ const Pagination = ({
 
 	// get Json from or rest from the endpoint from the server
 	const getFullJsonResults = async (page: number): Promise<serverData> => {
+		// token
+		let userAuthToken = null;
+		// await readItemFromStorage().then((responseStorage) => {
+		// 	userAuthToken = responseStorage.auth.token;
+		// });
+
 		let serverResponse: serverData = {
 			status: 0,
 			dataRawArr: [],
@@ -135,6 +133,7 @@ const Pagination = ({
 			await axios({
 				url: `${data}?${paramPage}=${page}&${paramPerpage}=${perPage}&${params}`,
 				method: 'get',
+				headers: { Authorization: `Bearer ${userAuthToken}` },
 			})
 				.then((responseData) => {
 					dataJson = pathData ? responseData.data[pathData] : responseData.data;
@@ -146,11 +145,9 @@ const Pagination = ({
 							: responseData.data,
 						totalResults: responseData.data.totalRows,
 					};
-
-					console.log('get server data');
 				})
 				.catch((errorData) => {
-					console.log('ENDPOINT NOT FOUND', errorData);
+					console.log('ENDPOINT NOT FOUND');
 				});
 		}
 
@@ -161,13 +158,13 @@ const Pagination = ({
 				await axios({
 					url: `${data}?${params}`,
 					method: 'get',
+					headers: { Authorization: `Bearer ${userAuthToken}` },
 				})
 					.then((responseData) => {
 						dataJson = pathData
 							? responseData.data[pathData]
 							: responseData.data;
 						serverResponse = getDataFromJson(dataJson, page);
-						console.log('get server dataz');
 					})
 					.catch((errorData) => {
 						console.log('ENDPOINT NOT FOUND', errorData);
@@ -277,11 +274,7 @@ const Pagination = ({
 		return contentOffset.y == 0;
 	};
 
-	// useEffect(() => {
-	// 	getResultPage();
-	// }, []);
-
-	/////
+	//
 	const onRefreshRanking = () => {
 		refContentScroll.current = {
 			allContent: 0,
@@ -298,16 +291,8 @@ const Pagination = ({
 		getResultPage();
 	};
 
-	// useFocusEffect(() => {
-	// 	if (reloadContent) {
-	// 		onRefreshRanking();
-	// 		setReloadContent(false);
-	// 	}
-	// });
-
 	useEffect(() => {
 		onRefreshRanking();
-		// setReloadContent(true);
 	}, [params]);
 
 	return (
@@ -340,9 +325,9 @@ const Pagination = ({
 					isLoadingServerScroll && (
 						<View
 							style={{
-								backgroundColor: 'gray',
+								backgroundColor: 'white',
 								width: '100%',
-								height: 50,
+								height: 200,
 							}}
 						>
 							<Text
@@ -350,9 +335,7 @@ const Pagination = ({
 									color: 'gray',
 									fontSize: 20,
 								}}
-							>
-								Carregando
-							</Text>
+							/>
 						</View>
 					)
 				) : (

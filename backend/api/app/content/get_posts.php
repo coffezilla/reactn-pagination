@@ -16,6 +16,7 @@ $dataResponse = array();
 // pagination controller
 $currentPage = addslashes(trim($_GET['page']));
 $resultsPerPage = addslashes(trim($_GET['perpage']));
+$userId = addslashes(trim($_GET['id']));
 $indexInitSearch = ($resultsPerPage*$currentPage)-$resultsPerPage;
 
 $dbResults = array(
@@ -130,4 +131,3 @@ $dataResponse["totalRows"] = count($dbResults);
 
 $resultadosJson = json_encode($dataResponse);
 echo $resultadosJson;
-
